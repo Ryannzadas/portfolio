@@ -1,26 +1,501 @@
 @import "tailwindcss";
 
+/* Tema controlado pela classe .dark no <html> (next-themes). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ------------------------------------------------------------------ */
+/* Tokens de cor                                                       */
+/* ------------------------------------------------------------------ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #f4f3ef;
+  --surface: #ebe9e3;
+  --surface-2: #e2dfd7;
+  --fg: #111113;
+  --muted: #5c5c66;
+  --line: rgb(17 17 19 / 0.12);
+  --accent: #7c3aed;
+  --accent-fg: #ffffff;
+  --accent-soft: rgb(124 58 237 / 0.14);
+  --grain-opacity: 0.05;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.76, 0, 0.24, 1);
+  /* Atraso das animações de entrada do hero (aumenta quando o loader aparece). */
+  --intro-delay: 0.15s;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #09090b;
+  --surface: #111114;
+  --surface-2: #19191e;
+  --fg: #ededef;
+  --muted: #8d8d98;
+  --line: rgb(255 255 255 / 0.09);
+  --accent: #b07cff;
+  --accent-fg: #09090b;
+  --accent-soft: rgb(176 124 255 / 0.14);
+  --grain-opacity: 0.06;
+  color-scheme: dark;
+}
+
+/* Escopado no hero (e não no <html>): remover data-intro não reestiliza a página inteira. */
+html[data-intro] [data-hero] {
+  --intro-delay: 1.75s;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-space-grotesk), var(--font-geist-sans), sans-serif;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ------------------------------------------------------------------ */
+/* Base                                                                */
+/* ------------------------------------------------------------------ */
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: auto;
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: clip;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  overflow-x: clip;
+  transition: background-color 0.4s var(--ease-out), color 0.4s var(--ease-out);
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Cursor customizado: esconde o nativo apenas quando o efeito está ativo. */
+html.has-custom-cursor,
+html.has-custom-cursor * {
+  cursor: none !important;
+}
+html.has-custom-cursor input,
+html.has-custom-cursor textarea {
+  cursor: text !important;
+}
+
+/* Grão de filme sobre o site: um tile PNG de ruído (bem mais barato que um filtro SVG). */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  background-image: url("/noise.png");
+  background-size: 128px 128px;
+}
+
+/* Texto vazado (contorno) usado em títulos. */
+.text-outline {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--fg);
+}
+@media (min-width: 768px) {
+  .text-outline {
+    -webkit-text-stroke-width: 1.5px;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Loader (100% CSS: roda antes do JavaScript e não atrasa o LCP)      */
+/* ------------------------------------------------------------------ */
+@property --loader-num {
+  syntax: "<integer>";
+  initial-value: 0;
+  inherits: false;
+}
+
+.loader {
+  display: none;
+}
+html[data-intro] .loader {
+  display: flex;
+  animation: loader-exit 0.8s var(--ease-in-out) 1.15s forwards;
+}
+.loader-count::before {
+  counter-reset: loader var(--loader-num);
+  content: counter(loader);
+  animation: loader-count 1.05s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+.loader-count {
+  font-variant-numeric: tabular-nums;
+}
+.loader-count::before {
+  display: inline-block;
+}
+.loader-bar {
+  transform-origin: left;
+  transform: scaleX(0);
+  animation: loader-bar 1.05s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+@keyframes loader-count {
+  to {
+    --loader-num: 100;
+  }
+}
+@keyframes loader-bar {
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes loader-exit {
+  to {
+    clip-path: inset(0 0 100% 0);
+    visibility: hidden;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Split text (hero) — cada letra sobe de dentro de uma máscara        */
+/* ------------------------------------------------------------------ */
+.split-word {
+  display: inline-block;
+  overflow: clip;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+  vertical-align: top;
+}
+.split-char {
+  display: inline-block;
+  transform: translate3d(0, 110%, 0) rotate(6deg);
+  animation: char-in 1s var(--ease-out) forwards;
+  animation-delay: calc(var(--intro-delay) + var(--i) * 32ms);
+}
+@keyframes char-in {
+  to {
+    transform: translate3d(0, 0, 0) rotate(0);
+  }
+}
+
+/* Reveal ao entrar na tela (ver components/motion/reveal.tsx) */
+[data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, var(--reveal-y, 28px), 0);
+  transition:
+    opacity 0.9s var(--ease-out) var(--reveal-delay, 0s),
+    transform 0.9s var(--ease-out) var(--reveal-delay, 0s);
+}
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Elementos do hero que surgem depois do nome. */
+.intro-fade {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: intro-fade 0.9s var(--ease-out) forwards;
+  animation-delay: calc(var(--intro-delay) + var(--d, 0s));
+}
+@keyframes intro-fade {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Gradiente que flutua lentamente atrás do hero. */
+.hero-blob {
+  animation: blob 18s ease-in-out infinite alternate;
+}
+@keyframes blob {
+  0% {
+    transform: translate3d(-10%, -6%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(12%, 8%, 0) scale(1.15);
+  }
+  100% {
+    transform: translate3d(-4%, 14%, 0) scale(0.95);
+  }
+}
+
+/* Cursor piscando do efeito de digitação. */
+.caret {
+  animation: caret 1s steps(1) infinite;
+}
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Linha do indicador de scroll. */
+.scroll-line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--fg);
+  transform-origin: top;
+  animation: scroll-line 2.2s var(--ease-in-out) infinite;
+}
+@keyframes scroll-line {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  45% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  55% {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Marquee                                                             */
+/* ------------------------------------------------------------------ */
+.marquee-track {
+  animation: marquee var(--duration, 40s) linear infinite;
+  animation-direction: var(--direction, normal);
+  /* Pausada fora da tela; o componente liga data-running quando fica visível. */
+  animation-play-state: paused;
+}
+.marquee[data-running] .marquee-track {
+  animation-play-state: running;
+}
+.marquee[data-running]:hover .marquee-track {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+/* Skeleton */
+.shimmer {
+  background: linear-gradient(
+    100deg,
+    var(--surface) 30%,
+    var(--surface-2) 50%,
+    var(--surface) 70%
+  );
+  background-size: 300% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+@keyframes shimmer {
+  to {
+    background-position: -150% 0;
+  }
+}
+
+/* Transição de tema (View Transitions API) */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* ------------------------------------------------------------------ */
+/* README renderizado no modal                                         */
+/* ------------------------------------------------------------------ */
+.readme {
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+.readme > * + * {
+  margin-top: 1em;
+}
+.readme h1,
+.readme h2,
+.readme h3,
+.readme h4 {
+  color: var(--fg);
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin-top: 1.8em;
+}
+.readme h1 {
+  font-size: 1.75rem;
+}
+.readme h2 {
+  font-size: 1.4rem;
+  padding-bottom: 0.4em;
+  border-bottom: 1px solid var(--line);
+}
+.readme h3 {
+  font-size: 1.15rem;
+}
+.readme > :first-child {
+  margin-top: 0;
+}
+.readme a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.readme strong {
+  color: var(--fg);
+}
+.readme ul,
+.readme ol {
+  padding-left: 1.4em;
+}
+.readme ul {
+  list-style: disc;
+}
+.readme ol {
+  list-style: decimal;
+}
+.readme li + li {
+  margin-top: 0.3em;
+}
+.readme li::marker {
+  color: var(--accent);
+}
+.readme img {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+.readme p:has(> img:only-child) img,
+.readme > img {
+  display: block;
+}
+.readme blockquote {
+  border-left: 2px solid var(--accent);
+  padding-left: 1em;
+  font-style: italic;
+}
+.readme hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+.readme :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--surface-2);
+  color: var(--fg);
+  padding: 0.15em 0.4em;
+  border-radius: 5px;
+}
+.readme pre {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1em 1.2em;
+  overflow-x: auto;
+}
+.readme table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.readme th,
+.readme td {
+  border: 1px solid var(--line);
+  padding: 0.5em 0.8em;
+  text-align: left;
+}
+.readme th {
+  color: var(--fg);
+  background: var(--surface);
+}
+.readme input[type="checkbox"] {
+  accent-color: var(--accent);
+  margin-right: 0.4em;
+}
+
+/* Realce de sintaxe (highlight.js) usando os tokens do tema */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-built_in,
+.hljs-literal {
+  color: var(--accent);
+}
+.hljs-string,
+.hljs-attr,
+.hljs-template-tag {
+  color: #34d399;
+}
+:root:not(.dark) .hljs-string,
+:root:not(.dark) .hljs-attr {
+  color: #047857;
+}
+.hljs-number,
+.hljs-title,
+.hljs-title.function_ {
+  color: #f59e0b;
+}
+:root:not(.dark) .hljs-number,
+:root:not(.dark) .hljs-title {
+  color: #b45309;
+}
+.hljs-comment,
+.hljs-quote {
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ------------------------------------------------------------------ */
+/* Movimento reduzido: desliga animações CSS e mostra tudo de imediato */
+/* ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .marquee-track {
+    animation: none !important;
+  }
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
 }

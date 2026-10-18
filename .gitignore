@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +40,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# certificados originais (as cópias públicas ficam em /public/certificados)
+/certificados
+
+# screenshots de teste do Playwright
+/.playwright-mcp
+
+# ferramentas locais do Claude Code (skills, hooks, binário do impeccable)
+/.claude
+skills-lock.json
