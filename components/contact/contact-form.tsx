@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUpRight, CheckCircle2, Loader2 } from "lucide-react";
 import { profile } from "@/content/dados";
 import { cn } from "@/lib/utils";
@@ -82,14 +81,9 @@ export function ContactForm() {
 
   return (
     <div className="relative rounded-[28px] border border-line bg-surface/70 p-6 backdrop-blur md:p-10">
-      <AnimatePresence mode="wait" initial={false}>
         {status === "success" ? (
-          <motion.div
-            key="ok"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            className="flex min-h-[420px] flex-col items-start justify-center gap-5"
+          <div
+            className="form-swap flex min-h-[420px] flex-col items-start justify-center gap-5"
             role="status"
           >
             <CheckCircle2 className="h-12 w-12 text-accent" aria-hidden="true" />
@@ -102,13 +96,9 @@ export function ContactForm() {
             >
               Enviar outra mensagem
             </button>
-          </motion.div>
+          </div>
         ) : (
-          <motion.form
-            key="form"
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
+          <form
             onSubmit={handleSubmit(onSubmit)}
             noValidate
             className="space-y-7"
@@ -178,9 +168,8 @@ export function ContactForm() {
                 </button>
               </Magnetic>
             </div>
-          </motion.form>
+          </form>
         )}
-      </AnimatePresence>
     </div>
   );
 }
@@ -209,19 +198,11 @@ function Field({
         {label}
       </label>
       {children}
-      <AnimatePresence>
-        {error && (
-          <motion.p
-            id={`${id}-error`}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mt-2 text-sm text-red-500 dark:text-red-400"
-          >
-            {error}
-          </motion.p>
-        )}
-      </AnimatePresence>
+      {error && (
+        <p id={`${id}-error`} className="form-swap mt-2 text-sm text-red-500 dark:text-red-400">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

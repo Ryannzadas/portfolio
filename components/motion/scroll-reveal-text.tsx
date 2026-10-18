@@ -1,12 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useIdleGSAP } from "@/lib/use-idle-gsap";
 import { cn } from "@/lib/utils";
-
-gsap.registerPlugin(ScrollTrigger);
 
 /**
  * Parágrafo cujas palavras "acendem" uma a uma conforme o scroll (GSAP scrub).
@@ -17,7 +13,7 @@ export function ScrollRevealText({ text, className }: { text: string; className?
   const ref = useRef<HTMLParagraphElement>(null);
 
   useIdleGSAP(
-    () => {
+    ({ gsap }) => {
       const mm = gsap.matchMedia();
       mm.add("(prefers-reduced-motion: no-preference)", () => {
         gsap.fromTo(

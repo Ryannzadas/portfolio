@@ -1,11 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useIdleGSAP } from "@/lib/use-idle-gsap";
-
-gsap.registerPlugin(ScrollTrigger);
 
 /**
  * Envolve a timeline: desenha a linha vertical conforme o scroll (scrub)
@@ -15,7 +11,7 @@ export function TimelineLine({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useIdleGSAP(
-    () => {
+    ({ gsap, ScrollTrigger }) => {
       const mm = gsap.matchMedia();
 
       mm.add("(prefers-reduced-motion: no-preference)", () => {

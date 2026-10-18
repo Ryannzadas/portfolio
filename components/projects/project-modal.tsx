@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import dynamic from "next/dynamic";
 import * as Dialog from "@radix-ui/react-dialog";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import { ArrowUpRight, Star, X } from "lucide-react";
 import type { Project } from "@/lib/github";
 import { useLenis } from "@/components/providers/smooth-scroll";
@@ -42,6 +42,8 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
   }, [project, lenis]);
 
   return (
+    // reducedMotion="user": respeita prefers-reduced-motion.
+    <MotionConfig reducedMotion="user">
     <Dialog.Root open={Boolean(project)} onOpenChange={(open) => !open && onClose()}>
       <AnimatePresence>
         {project && (
@@ -129,5 +131,6 @@ export function ProjectModal({ project, onClose }: ProjectModalProps) {
         )}
       </AnimatePresence>
     </Dialog.Root>
+    </MotionConfig>
   );
 }

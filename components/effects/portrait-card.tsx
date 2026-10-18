@@ -2,17 +2,13 @@
 
 import { useRef } from "react";
 import Image from "next/image";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useIdleGSAP } from "@/lib/use-idle-gsap";
 import { profile } from "@/content/dados";
 import { tiltClasses, useTilt } from "@/lib/use-tilt";
 
-gsap.registerPlugin(ScrollTrigger);
-
 /**
  * Cartão de "foto" do Sobre.
- * - Parallax vertical ligado ao scroll (GSAP).
+ * - Parallax vertical ligado ao scroll (GSAP), só em dispositivos com mouse.
  * - Hover: inclinação 3D + brilho que segue o cursor.
  * - Sem foto em `profile.photo`, mostra um crachá gerativo com o monograma.
  */
@@ -21,9 +17,9 @@ export function PortraitCard() {
   const tilt = useTilt(14);
 
   useIdleGSAP(
-    () => {
+    ({ gsap }) => {
       const mm = gsap.matchMedia();
-      mm.add("(prefers-reduced-motion: no-preference)", () => {
+      mm.add("(prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine)", () => {
         gsap.fromTo(
           ".portrait-inner",
           { yPercent: 8 },

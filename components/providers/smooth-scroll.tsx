@@ -2,18 +2,16 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import Lenis from "lenis";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
+import type Lenis from "lenis";
 
 const LenisContext = createContext<Lenis | null>(null);
 
 /**
  * Smooth scroll com Lenis, sincronizado com o ticker do GSAP
  * para que as animações do ScrollTrigger fiquem perfeitamente alinhadas.
- * Desativado quando o usuário prefere movimento reduzido.
+ * - Só em dispositivos com mouse/trackpad (no touch o Lenis não suaviza a rolagem).
+ * - Desativado quando o usuário prefere movimento reduzido.
+ * - Lenis e GSAP são importados sob demanda, fora do carregamento inicial.
  */
 export function SmoothScroll({ children }: { children: React.ReactNode }) {
   const [lenis, setLenis] = useState<Lenis | null>(null);
@@ -21,25 +19,39 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
   const lastPathname = useRef(pathname);
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const fine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!fine || reduced) return;
 
-    const instance = new Lenis({
-      duration: 1.15,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-    });
+    let cancelled = false;
+    let cleanup = () => {};
 
-    instance.on("scroll", ScrollTrigger.update);
-    const tick = (time: number) => instance.raf(time * 1000);
-    gsap.ticker.add(tick);
-    gsap.ticker.lagSmoothing(0);
-    // O Lenis só existe no cliente: expomos a instância via contexto depois de criá-la.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLenis(instance);
+    Promise.all([import("lenis"), import("gsap"), import("gsap/ScrollTrigger")]).then(
+      ([{ default: LenisClass }, { gsap }, { ScrollTrigger }]) => {
+        if (cancelled) return;
+        gsap.registerPlugin(ScrollTrigger);
+
+        const instance = new LenisClass({
+          duration: 1.15,
+          easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        });
+        instance.on("scroll", ScrollTrigger.update);
+        const tick = (time: number) => instance.raf(time * 1000);
+        gsap.ticker.add(tick);
+        gsap.ticker.lagSmoothing(0);
+        setLenis(instance);
+
+        cleanup = () => {
+          gsap.ticker.remove(tick);
+          instance.destroy();
+          setLenis(null);
+        };
+      },
+    );
 
     return () => {
-      gsap.ticker.remove(tick);
-      instance.destroy();
-      setLenis(null);
+      cancelled = true;
+      cleanup();
     };
   }, []);
 
@@ -61,7 +73,9 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
     } else {
       window.scrollTo(0, 0);
     }
-    const id = window.setTimeout(() => ScrollTrigger.refresh(), 300);
+    const id = window.setTimeout(() => {
+      import("gsap/ScrollTrigger").then(({ ScrollTrigger }) => ScrollTrigger.refresh());
+    }, 300);
     return () => window.clearTimeout(id);
   }, [pathname, lenis]);
 
@@ -77,17 +91,18 @@ export function useScrollTo() {
         lenis.scrollTo(target, { duration: 1.4 });
         return;
       }
-      if (typeof target === "number") window.scrollTo({ top: target });
+      const smooth = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+      if (typeof target === "number") window.scrollTo({ top: target, behavior: smooth });
       else {
         const el = typeof target === "string" ? document.querySelector(target) : target;
-        el?.scrollIntoView();
+        el?.scrollIntoView({ behavior: smooth });
       }
     },
     [lenis],
   );
 }
 
-/** Pausa/retoma o scroll (usado no menu mobile). */
+/** Pausa/retoma o scroll (usado no modal). */
 export function useLenis() {
   return useContext(LenisContext);
 }
