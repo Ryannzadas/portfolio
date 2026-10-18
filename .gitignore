@@ -50,3 +50,6 @@ next-env.d.ts
 # ferramentas locais do Claude Code (skills, hooks, binário do impeccable)
 /.claude
 skills-lock.json
+
+.vercel
+.env*
