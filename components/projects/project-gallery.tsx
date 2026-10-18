@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { Project } from "@/lib/github";
 import { Reveal } from "@/components/motion/reveal";
 import { ProjectCard } from "./project-card";
-import { ProjectModal } from "./project-modal";
+import { LazyProjectModal } from "./lazy-modal";
 
 /**
  * Grid de cards da home (2 colunas no desktop).
@@ -27,7 +27,7 @@ export function ProjectGallery({ projects }: { projects: Project[] }) {
           );
         })}
       </div>
-      <ProjectModal project={active} onClose={() => setActive(null)} />
+      <LazyProjectModal project={active} onClose={() => setActive(null)} />
     </>
   );
 }

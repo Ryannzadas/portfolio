@@ -1,9 +1,8 @@
 "use client";
 
-import { motion, useMotionTemplate, useMotionValue, useSpring } from "framer-motion";
 import { ArrowUpRight, Star } from "lucide-react";
 import type { Project } from "@/lib/github";
-import { usePointerEffects } from "@/lib/hooks";
+import { tiltClasses, useTilt } from "@/lib/use-tilt";
 import { cn } from "@/lib/utils";
 import { GithubIcon } from "@/components/ui/icons";
 import { ProjectCover } from "./project-cover";
@@ -22,47 +21,21 @@ type ProjectCardProps = {
  * de código/demo ficam por cima e continuam clicáveis e focáveis.
  */
 export function ProjectCard({ project, index, featured, onOpen }: ProjectCardProps) {
-  const pointerEnabled = usePointerEffects();
-  const rx = useMotionValue(0);
-  const ry = useMotionValue(0);
-  const gx = useMotionValue(50);
-  const gy = useMotionValue(50);
-  const rotateX = useSpring(rx, { stiffness: 160, damping: 20 });
-  const rotateY = useSpring(ry, { stiffness: 160, damping: 20 });
-  const glow = useMotionTemplate`radial-gradient(500px circle at ${gx}% ${gy}%, var(--accent-soft), transparent 45%)`;
-
-  const onMove = (e: React.PointerEvent<HTMLElement>) => {
-    if (!pointerEnabled) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / rect.width;
-    const py = (e.clientY - rect.top) / rect.height;
-    const intensity = featured ? 5 : 8;
-    ry.set((px - 0.5) * intensity);
-    rx.set((0.5 - py) * intensity);
-    gx.set(px * 100);
-    gy.set(py * 100);
-  };
-
-  const onLeave = () => {
-    rx.set(0);
-    ry.set(0);
-  };
+  const tilt = useTilt(featured ? 5 : 8);
 
   return (
     <div style={{ perspective: 1200 }} className="h-full">
-      <motion.article
-        onPointerMove={onMove}
-        onPointerLeave={onLeave}
-        style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+      <article
+        {...tilt}
         className={cn(
-          "group relative flex h-full flex-col overflow-hidden rounded-[24px] border border-line bg-surface transition-colors duration-500 hover:border-fg/20",
+          tiltClasses,
+          "group relative flex h-full flex-col overflow-hidden rounded-[24px] border border-line bg-surface hover:border-fg/20",
           featured && "lg:grid lg:grid-cols-[1.3fr_1fr]",
         )}
       >
-        <motion.div
+        <div
           aria-hidden="true"
-          style={{ backgroundImage: glow }}
-          className="pointer-events-none absolute inset-0 z-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(500px_circle_at_var(--gx,50%)_var(--gy,50%),var(--accent-soft),transparent_45%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
         />
 
         <ProjectCover
@@ -125,7 +98,7 @@ export function ProjectCard({ project, index, featured, onOpen }: ProjectCardPro
             )}
           </div>
         </div>
-      </motion.article>
+      </article>
     </div>
   );
 }

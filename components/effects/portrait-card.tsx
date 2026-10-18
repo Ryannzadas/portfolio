@@ -5,9 +5,8 @@ import Image from "next/image";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useIdleGSAP } from "@/lib/use-idle-gsap";
-import { motion, useMotionTemplate, useMotionValue, useSpring } from "framer-motion";
 import { profile } from "@/content/dados";
-import { usePointerEffects } from "@/lib/hooks";
+import { tiltClasses, useTilt } from "@/lib/use-tilt";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -19,15 +18,7 @@ gsap.registerPlugin(ScrollTrigger);
  */
 export function PortraitCard() {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const pointerEnabled = usePointerEffects();
-
-  const rx = useMotionValue(0);
-  const ry = useMotionValue(0);
-  const gx = useMotionValue(50);
-  const gy = useMotionValue(50);
-  const rotateX = useSpring(rx, { stiffness: 150, damping: 18 });
-  const rotateY = useSpring(ry, { stiffness: 150, damping: 18 });
-  const glare = useMotionTemplate`radial-gradient(circle at ${gx}% ${gy}%, rgb(255 255 255 / 0.16), transparent 55%)`;
+  const tilt = useTilt(14);
 
   useIdleGSAP(
     () => {
@@ -47,30 +38,12 @@ export function PortraitCard() {
     wrapRef,
   );
 
-  const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!pointerEnabled) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / rect.width;
-    const py = (e.clientY - rect.top) / rect.height;
-    ry.set((px - 0.5) * 14);
-    rx.set((0.5 - py) * 14);
-    gx.set(px * 100);
-    gy.set(py * 100);
-  };
-
-  const onLeave = () => {
-    rx.set(0);
-    ry.set(0);
-  };
-
   return (
     <div ref={wrapRef} className="relative mx-auto w-full max-w-sm self-center lg:max-w-none" style={{ perspective: 1000 }}>
       <div className="portrait-inner">
-        <motion.div
-          onPointerMove={onMove}
-          onPointerLeave={onLeave}
-          style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-          className="group relative aspect-[4/5] overflow-hidden rounded-[28px] border border-line bg-surface"
+        <div
+          {...tilt}
+          className={`${tiltClasses} group relative aspect-[4/5] overflow-hidden rounded-[28px] border border-line bg-surface`}
         >
           {profile.photo ? (
             <Image
@@ -83,12 +56,11 @@ export function PortraitCard() {
           ) : (
             <GeneratedBadge />
           )}
-          <motion.div
+          <div
             aria-hidden="true"
-            style={{ backgroundImage: glare }}
-            className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_var(--gx,50%)_var(--gy,50%),rgb(255_255_255/0.16),transparent_55%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
           />
-        </motion.div>
+        </div>
       </div>
     </div>
   );

@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUpRight, CheckCircle2, Loader2 } from "lucide-react";
 import { profile } from "@/content/dados";
@@ -11,25 +9,42 @@ import { cn } from "@/lib/utils";
 import { Magnetic } from "@/components/motion/magnetic";
 import { buttonClasses } from "@/components/ui/button";
 
-const schema = z.object({
-  name: z.string().trim().min(2, { error: "Digite seu nome (mínimo 2 letras)." }).max(80, { error: "Nome muito longo." }),
-  email: z.email({ error: "Digite um e-mail válido." }),
-  message: z
-    .string()
-    .trim()
-    .min(10, { error: "Escreva pelo menos 10 caracteres." })
-    .max(2000, { error: "Máximo de 2000 caracteres." }),
-  // Honeypot anti-spam: humanos não veem nem preenchem este campo.
-  _gotcha: z.string().max(0).optional(),
-});
+type FormValues = {
+  name: string;
+  email: string;
+  message: string;
+  /** Honeypot anti-spam: humanos não veem nem preenchem este campo. */
+  _gotcha?: string;
+};
 
-type FormValues = z.infer<typeof schema>;
+// Regras de validação (nativas do react-hook-form — sem bibliotecas extras no bundle).
+const rules = {
+  name: {
+    validate: (v = "") => {
+      const value = v.trim();
+      if (value.length < 2) return "Digite seu nome (mínimo 2 letras).";
+      if (value.length > 80) return "Nome muito longo.";
+      return true;
+    },
+  },
+  email: {
+    validate: (v = "") => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) || "Digite um e-mail válido.",
+  },
+  message: {
+    validate: (v = "") => {
+      const value = v.trim();
+      if (value.length < 10) return "Escreva pelo menos 10 caracteres.";
+      if (value.length > 2000) return "Máximo de 2000 caracteres.";
+      return true;
+    },
+  },
+};
 type Status = "idle" | "success" | "error";
 
 const FORMSPREE_ID = process.env.NEXT_PUBLIC_FORMSPREE_ID;
 
 /**
- * Formulário de contato com validação em tempo real (react-hook-form + zod).
+ * Formulário de contato com validação em tempo real (react-hook-form).
  * Envia para o Formspree; sem ID configurado, abre o app de e-mail como fallback.
  */
 export function ContactForm() {
@@ -39,7 +54,7 @@ export function ContactForm() {
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<FormValues>({ resolver: zodResolver(schema), mode: "onTouched" });
+  } = useForm<FormValues>({ mode: "onTouched" });
 
   const onSubmit = async (values: FormValues) => {
     if (values._gotcha) return;
@@ -55,7 +70,7 @@ export function ContactForm() {
       const res = await fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
         method: "POST",
         headers: { Accept: "application/json", "Content-Type": "application/json" },
-        body: JSON.stringify({ name: values.name, email: values.email, message: values.message }),
+        body: JSON.stringify({ name: values.name.trim(), email: values.email.trim(), message: values.message.trim() }),
       });
       if (!res.ok) throw new Error(String(res.status));
       setStatus("success");
@@ -105,7 +120,7 @@ export function ContactForm() {
                 type="text"
                 autoComplete="name"
                 placeholder="Como posso te chamar?"
-                {...register("name")}
+                {...register("name", rules.name)}
                 aria-invalid={Boolean(errors.name)}
                 aria-describedby={errors.name ? "name-error" : undefined}
                 className={inputClasses(Boolean(errors.name))}
@@ -119,7 +134,7 @@ export function ContactForm() {
                 autoComplete="email"
                 inputMode="email"
                 placeholder="voce@exemplo.com"
-                {...register("email")}
+                {...register("email", rules.email)}
                 aria-invalid={Boolean(errors.email)}
                 aria-describedby={errors.email ? "email-error" : undefined}
                 className={inputClasses(Boolean(errors.email))}
@@ -131,7 +146,7 @@ export function ContactForm() {
                 id="message"
                 rows={5}
                 placeholder="Conte um pouco sobre a ideia, vaga ou projeto…"
-                {...register("message")}
+                {...register("message", rules.message)}
                 aria-invalid={Boolean(errors.message)}
                 aria-describedby={errors.message ? "message-error" : undefined}
                 className={cn(inputClasses(Boolean(errors.message)), "resize-none")}

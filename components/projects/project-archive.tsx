@@ -6,7 +6,7 @@ import { ArrowUpRight } from "lucide-react";
 import type { Project } from "@/lib/github";
 import { usePointerEffects } from "@/lib/hooks";
 import { ProjectCover } from "./project-cover";
-import { ProjectModal } from "./project-modal";
+import { LazyProjectModal } from "./lazy-modal";
 
 /**
  * Lista editorial de projetos. No desktop, passar o mouse sobre uma linha
@@ -89,7 +89,7 @@ export function ProjectArchive({ projects }: { projects: Project[] }) {
           </motion.div>
         )}
       </ul>
-      <ProjectModal project={active} onClose={() => setActive(null)} />
+      <LazyProjectModal project={active} onClose={() => setActive(null)} />
     </>
   );
 }
