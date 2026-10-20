@@ -117,6 +117,13 @@ export type Certificate = {
 
 export const certificates: Certificate[] = [
   {
+    title: "Formação JavaScript Developer",
+    issuer: "DIO",
+    date: "2026-10-20",
+    hours: 39,
+    file: "/certificados/dio-formacao-javascript-developer.pdf",
+  },
+  {
     title: "Front-end Frameworks",
     issuer: "Impacta",
     date: "2026-04-13",
