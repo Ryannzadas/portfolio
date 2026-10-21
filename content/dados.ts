@@ -117,6 +117,13 @@ export type Certificate = {
 
 export const certificates: Certificate[] = [
   {
+    title: "Formação Java Fundamentals",
+    issuer: "DIO",
+    date: "2026-10-21",
+    hours: 45,
+    file: "/certificados/dio-formacao-java-fundamentals.pdf",
+  },
+  {
     title: "GFT Start #7 - Java",
     issuer: "DIO · GFT",
     date: "2026-10-21",
